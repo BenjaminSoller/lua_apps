@@ -1,0 +1,30 @@
+{
+    "applications": [
+        {
+            "author": "Benjamin Soller",
+            "description": {
+                "de": "http://LiPo_Waechter_Description.html"
+            },
+            "files": [
+                {
+                    "destination": "Apps/lipo_waechter.lua",
+                    "hash": "36afebf10b986242c091efb84644002fd3099b57",
+                    "size": 2662,
+                    "url": "http://lipo_waechter.lua"
+                }
+            ],
+            "hw": [
+                678,
+                679
+            ],
+            "id": 0,
+            "name": {
+                "de": "Lipo Waechter",
+                "en": "Lipo Waechter"
+            },
+            "previewIcon": "http://",
+            "releaseDate": "So Okt 6 08:29:00 2024",
+            "version": ""
+        }
+    ]
+}
