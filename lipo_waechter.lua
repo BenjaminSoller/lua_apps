@@ -1,29 +1,27 @@
 -- Globale Variablen
-local sensorId = 0 -- ID des ausgewählten Spannungssensors
-local cellCount = 4 -- Standard Zellenanzahl (S), anpassbar über die Einstellungen
-local minVoltage = 3.2 -- Minimalspannung pro Zelle (anpassbar)
-local maxVoltage = 4.2 -- Maximalspannung pro Zelle (anpassbar)
-local alarmThreshold = 20 -- Alarm ab 20% Restladung
+local sensorId = 0 -- Standard ID für den Spannungssensor
+local cellCount = 4 -- Anzahl der Zellen (S)
+local minVoltage = 3.2 -- Minimalspannung pro Zelle
+local maxVoltage = 4.2 -- Maximalspannung pro Zelle
+local alarmThreshold = 20 -- Alarm ab 20%
 local voltage = 0 -- Gemessene Spannung
-local percent = 0 -- Berechneter Prozentsatz des Ladezustands
-local voltageDisplayMode = "total" -- Optionen: "single" (Einzelzelle) oder "total" (Gesamtpack)
+local percent = 0 -- Berechneter Prozentsatz
 
--- Lade die gespeicherten Einstellungen (falls vorhanden)
-local function loadSettings()
-    -- Hier könntest du später Einstellungen aus einer JSON-Datei oder aus den Sender-Einstellungen laden
-end
-
--- Berechnung der Batteriespannung in Prozent
+-- Funktion zur Berechnung des Ladezustands
 local function calculatePercentage(voltage)
     local totalMaxVoltage = cellCount * maxVoltage
     local totalMinVoltage = cellCount * minVoltage
     local totalVoltageRange = totalMaxVoltage - totalMinVoltage
     local voltageRange = voltage - totalMinVoltage
 
-    return math.max(0, math.min(100, (voltageRange / totalVoltageRange) * 100))
+    if voltageRange < 0 then
+        voltageRange = 0
+    end
+    
+    return math.min(100, (voltageRange / totalVoltageRange) * 100)
 end
 
--- Zeichne Batteriesymbol und ändere die Farben basierend auf dem Batteriestatus
+-- Funktion zur Darstellung der Batterieanzeige
 local function drawBattery(x, y, w, h, percent)
     local color
     if percent > 75 then
@@ -35,16 +33,56 @@ local function drawBattery(x, y, w, h, percent)
     else
         color = lcd.RGB(255, 0, 0) -- Rot
     end
-    
+
     lcd.setColor(color)
-    lcd.drawFilledRectangle(x, y, w, h * (percent / 100)) -- Batterieinhalt basierend auf Prozentsatz
+    local filledHeight = math.floor(h * (percent / 100))
+    lcd.drawFilledRectangle(x, y + (h - filledHeight), w, filledHeight)
     lcd.setColor(lcd.RGB(255, 255, 255)) -- Zurücksetzen auf Weiß
-    lcd.drawRectangle(x, y, w, h) -- Batterierahmen zeichnen
+    lcd.drawRectangle(x, y, w, h)
 end
 
--- Die Hauptfunktion, die in der Schleife läuft
+-- Hauptloop-Funktion
 local function loop()
-    -- Telemetrie-Spannungswert abfragen
-    voltage = getValue(sensorId) -- Sensor ID muss eingestellt sein
+    -- Spannung vom Telemetrie-Sensor abrufen
+    voltage = getValue(sensorId)
+    
+    if voltage == nil then
+        voltage = 0 -- Sicherheitsvorkehrung, falls kein Sensorwert verfügbar ist
+    end
 
-    -- Berechnung des Prozentsatz
+    -- Berechne Prozentsatz
+    percent = calculatePercentage(voltage)
+
+    -- Anzeige auf dem Bildschirm
+    lcd.clear()
+    lcd.drawText(10, 10, "Akkustatus: " .. math.floor(percent) .. "%", FONT_MAXI)
+    drawBattery(10, 40, 50, 100, percent)
+
+    -- Überprüfe, ob ein Alarm ausgelöst werden soll
+    if percent <= alarmThreshold then
+        playFile("/SOUNDS/de/alarm.wav")
+    end
+end
+
+-- Initialisierung der App
+local function init()
+    -- Hier könntest du Einstellungen oder Initialisierungen hinzufügen
+end
+
+-- Konfigurationsmenü
+local function initForm()
+    form.addRow(2)
+    form.addLabel({label="Zellenanzahl (S)", width=220})
+    form.addIntbox(cellCount, 1, 12, 4, 0, 1, function(value) cellCount = value end)
+
+    form.addRow(2)
+    form.addLabel({label="Alarmwert (%)", width=220})
+    form.addIntbox(alarmThreshold, 5, 100, 20, 0, 1, function(value) alarmThreshold = value end)
+
+    form.addRow(2)
+    form.addLabel({label="Spannungssensor-ID", width=220})
+    form.addIntbox(sensorId, 0, 255, 0, 0, 1, function(value) sensorId = value end)
+end
+
+-- Registrierung der init und loop Funktionen
+return { init=init, loop=loop, initForm=initForm }
