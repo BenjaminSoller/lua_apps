@@ -7,7 +7,7 @@
             },
             "files": [
                 {
-                    "destination": "https://raw.githubusercontent.com/BenjaminSoller/lua_apps/refs/heads/main/lipo_waechter.lua",
+                    "destination": "Apps/lipo_waechter.lua",
                     "hash": "36afebf10b986242c091efb84644002fd3099b57",
                     "size": 2662,
                     "url": "https://raw.githubusercontent.com/BenjaminSoller/lua_apps/refs/heads/main/lipo_waechter.lua"
